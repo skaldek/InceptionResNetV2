@@ -1,10 +1,13 @@
+import tensorflow as tf
 from tensorflow.keras import layers
+import hyperparams as hp
 
 
 def conv2d(inp, filters, kernel, strides=1, padding='same', use_bias=False, activation='relu'):
     x = layers.Conv2D(filters, kernel, strides, padding=padding, use_bias=use_bias)(inp)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation(activation)(x)
+    x = layers.BatchNormalization(3, scale=False)(x)
+    if activation != 'None':
+        x = layers.Activation(activation)(x)
     return x
 
 
@@ -47,9 +50,9 @@ def block_a(inp):
     x3 = conv2d(x3, 64, 3)
 
     x = layers.Concatenate(3)([x1, x2, x3])
-    x = conv2d(x, 384, 1, activation='linear')
+    x = conv2d(x, 384, 1, activation='None')
 
-    x = layers.Add()([inp, x])
+    x = res_con(inp, x, hp.scale_a)
 
     return x
 
@@ -76,9 +79,9 @@ def block_b(inp):
     x2 = conv2d(x2, 192, (7, 1))
 
     x = layers.Concatenate(3)([x1, x2])
-    x = conv2d(x, 1152, 1, activation='linear')
+    x = conv2d(x, 1152, 1, activation='None')
 
-    x = layers.Add()([inp, x])
+    x = res_con(inp, x, hp.scale_b)
 
     return x
 
@@ -109,8 +112,15 @@ def block_c(inp):
     x2 = conv2d(x2, 256, (3, 1))
 
     x = layers.Concatenate(3)([x1, x2])
-    x = conv2d(x, 2048, 1, activation='linear')
+    x = conv2d(x, 2048, 1, activation='None')
 
-    x = layers.Add()([inp, x])
+    x = res_con(inp, x, hp.scale_c)
 
+    return x
+
+
+def res_con(inp, out, scale_val):
+    x = layers.Lambda(lambda inputs, scale: inputs[0] + inputs[1] * scale,
+                      output_shape=tf.keras.backend.int_shape(inp)[1:],
+                      arguments={'scale': scale_val})([inp, out])
     return x
