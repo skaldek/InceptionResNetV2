@@ -1,6 +1,7 @@
 # Inception-ResNet-V2
 It is my try of tensorflow implementation. Everything was read here:
 https://arxiv.org/pdf/1602.07261.pdf
+![Model](/fig.png/)
 
 ### Network Training
 In order to start training you need to follow a few simple steps. 
