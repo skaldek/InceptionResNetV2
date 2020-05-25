@@ -60,11 +60,11 @@ def block_a(inp):
 def reduction_a(inp):
     x1 = layers.MaxPool2D(3, 2)(inp)
 
-    x2 = conv2d(inp, 384, 3, 2, 'valid')
+    x2 = conv2d(inp, hp.filters_n, 3, 2, 'valid')
 
-    x3 = conv2d(inp, 256, 1)
-    x3 = conv2d(x3, 256, 3)
-    x3 = conv2d(x3, 384, 3, 2, 'valid')
+    x3 = conv2d(inp, hp.filters_k, 1)
+    x3 = conv2d(x3, hp.filters_l, 3)
+    x3 = conv2d(x3, hp.filters_m, 3, 2, 'valid')
 
     x = layers.Concatenate(3)([x1, x2, x3])
 

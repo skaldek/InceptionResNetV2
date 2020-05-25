@@ -1,3 +1,4 @@
+import math
 import os
 
 import numpy as np
@@ -11,7 +12,7 @@ BUFFER_SIZE = 100
 
 x_train = []
 y_train = []
-categories = os.listdir(path='Images')[:2]
+categories = os.listdir(path='Images')[:10]
 print(len(categories))
 num_categories = len(categories)
 for idx, category in enumerate(categories):
@@ -35,23 +36,23 @@ train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(B
 print(train_dataset)
 
 model = inception(num_categories)
-# tf.keras.utils.plot_model(model, show_shapes=True)
+tf.keras.utils.plot_model(model, show_shapes=True)
 
 optimizer = tf.keras.optimizers.Adam(1e-4)
 
-checkpoint_dir = './training_checkpoints'
-checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+
+checkpoint_prefix = os.path.join(hp.checkpoint_dir, "ckpt")
 checkpoint = tf.train.Checkpoint(model=model,
                                  optimizer=optimizer)
 
-if os.path.exists('training_checkpoints'):
-    checkpoint.restore(tf.train.latest_checkpoint('training_checkpoints'))
+if os.path.exists(hp.checkpoint_dir):
+    checkpoint.restore(tf.train.latest_checkpoint(hp.checkpoint_dir))
 
-print(model.summary())
+# print(model.summary())
 
-loss_object = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
+loss_object = tf.keras.losses.CategoricalCrossentropy()
 
-print(np.argmax(model.predict(x_train[0].reshape(1, 299, 299, 3))))
+print('Prediction: ', np.argmax(model.predict(x_train[0].reshape(1, 299, 299, 3))))
 
 train_loss = tf.keras.metrics.Mean(name='train_loss')
 train_accuracy = tf.keras.metrics.CategoricalAccuracy(name='train_accuracy')
@@ -70,11 +71,14 @@ def train_step(imgs, lbls):
 
 
 def train():
+    def ceil(val):
+        return math.ceil(val * 100) / 100
+
     for epoch in range(hp.epochs):
         train_loss.reset_states()
         train_accuracy.reset_states()
 
-        for images, labels in tqdm(train_dataset):
+        for images, labels in tqdm(train_dataset, total=len(list(train_dataset))):
             train_step(images, labels)
 
         if (epoch + 1) % 1 == 0:
@@ -82,9 +86,8 @@ def train():
 
         template = 'Epoch {}, Loss: {}, Accuracy: {}'
         print(template.format(epoch + 1,
-                              train_loss.result(),
-                              train_accuracy.result() * 100))
-        print(np.argmax(model.predict(x_train[0].reshape(1, 299, 299, 3))))
+                              ceil(train_loss.result()),
+                              ceil(train_accuracy.result() * 100)))
 
 
 train()
